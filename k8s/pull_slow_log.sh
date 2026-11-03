@@ -1,0 +1,44 @@
+
+#!/bin/sh
+
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+. "${SCRIPT_DIR}/env.sh"
+
+namespace="$NAMESPACE"
+begin_time="$BEGIN_TIME_ISO"
+end_time="$END_TIME_ISO"
+
+out="slowlog_${namespace}_${begin_time}_${end_time}.log"
+: > "$out"
+
+kubectl -n "$namespace" get pod --no-headers \
+| awk '{print $1}' \
+| grep 'tidb' \
+| grep -v 'dashboard' \
+| while read pod; do
+  echo ">>> collecting from pod: $pod" >&2
+
+  {
+    echo "######## POD: $pod ########"
+
+    kubectl -n "$namespace" exec "$pod" -- sh -c "
+      if [ ! -f /var/log/tidb/slowlog ]; then
+        exit 0
+      fi
+
+      awk -v start='$begin_time' -v end='$end_time' '
+        /^# Time:/ {
+          t=\$3
+          sub(/Z$/, \"\", t)
+          sub(/\\..*/, \"\", t)
+          keep = (t >= start && t <= end)
+        }
+        keep { print }
+      ' /var/log/tidb/slowlog
+    "
+
+    echo
+  } >> "$out"
+done
+
+echo "done: $out"
