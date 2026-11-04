@@ -32,7 +32,7 @@ fi
 # pull_tikv_log.sh and pull_rocksdb_log.sh. Empty = collect all TiKV instances.
 : "${TIKV_INSTANCE_FILTER=0a03f078}"
 # Optional awk regular expression. Matching CDC log lines are excluded from output.
-: "${CDC_LOG_FILTER_PATTERN:=scan window local advance due to pending barrier}"
+# : "${CDC_LOG_FILTER_PATTERN:=scan window local advance due to pending barrier}"
 
 _ec2_date_slash() {
     printf '%s\n' "$1" | tr 'T' ' ' | awk '{print $1}' | tr '-' '/'
