@@ -22,8 +22,8 @@ fi
 # NAID-12205: Rachel's most recent node_2425 attempt on the isolated 8.5.8 newarch TiCDC node.
 # Her "Changefeed Checkpoint Lag" screenshot (EDT, UTC-4): lag rises ~15:02 EDT, all lines back to 0 by ~15:27 EDT
 # = ~19:02 -> ~19:27 UTC. Margin added to catch changefeed creation and the aftermath. All times here are UTC.
-: "${BEGIN_TIME:=2026-11-10 17:55:00}"
-: "${END_TIME:=2026-11-10 19:15:00}"
+: "${BEGIN_TIME:=2026-11-10 20:00:00}"
+: "${END_TIME:=2026-11-10 20:20:00}"
 : "${LOG_DIR:=/var/log/tidb}"
 : "${DEBUG:=1}"
 : "${INTERVAL_MINUTES:=20}"
