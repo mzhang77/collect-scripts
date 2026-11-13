@@ -8,6 +8,7 @@ CLUSTER="$CLUSTER_NAME"
 BEGIN_TIME="$BEGIN_TIME_SLASH"
 END_TIME="$END_TIME_SLASH"
 CDC_FILTER_PATTERN="$CDC_LOG_FILTER_PATTERN"
+CDC_MAX_LINE_LEN="$CDC_LOG_MAX_LINE_LEN"
 
 # TiCDC log directory on ticdc nodes
 # Set to 1 to print remote file-selection details to stderr.
@@ -28,12 +29,14 @@ REMOTE_LOG_DIR="$(quote "$LOG_DIR")"
 REMOTE_BEGIN_TIME="$(quote "$BEGIN_TIME")"
 REMOTE_END_TIME="$(quote "$END_TIME")"
 REMOTE_CDC_FILTER_PATTERN="$(quote "$CDC_FILTER_PATTERN")"
+REMOTE_CDC_MAX_LINE_LEN="$(quote "$CDC_MAX_LINE_LEN")"
 
 REMOTE_SCRIPT='log_dir="$1"
 begin="$2"
 end="$3"
 debug="$4"
 filter_pattern="$5"
+max_line_len="${6:-0}"
 
 cd "$log_dir" || exit 10
 
@@ -103,11 +106,30 @@ fi
 
 tmp_out="/tmp/ticdc_filtered_$$.log"
 
-awk -v begin="$begin_cmp" -v end="$end_cmp" -v filter_pattern="$filter_pattern" '\''
+awk -v begin="$begin_cmp" -v end="$end_cmp" -v filter_pattern="$filter_pattern" -v max_len="$max_line_len" '\''
   match($0, /^\[([0-9]{4}\/[0-9]{2}\/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})/, m) {
     t = m[1]
     if (t >= begin && t <= end && (filter_pattern == "" || $0 !~ filter_pattern)) {
-      print $0
+      # Over-long lines (e.g. DML errors that dump whole SQL batches with
+      # arguments) are shortened field by field: each "] [" separated field
+      # longer than max_len/4 keeps its first and last max_len/8 bytes, so
+      # the error cause at the end of [error="..."] and the field names stay.
+      if (max_len > 0 && length($0) > max_len) {
+        keep = int(max_len / 8)
+        n = split($0, parts, /\] \[/)
+        out = ""
+        for (i = 1; i <= n; i++) {
+          f = parts[i]
+          fl = length(f)
+          if (fl > 2 * keep + 64) {
+            f = substr(f, 1, keep) " ...<cut " (fl - 2 * keep) " bytes>... " substr(f, fl - keep + 1)
+          }
+          out = (i == 1) ? f : out "] [" f
+        }
+        print out
+      } else {
+        print $0
+      }
     }
   }
 '\'' "${selected_files[@]}" 2>/dev/null > "$tmp_out"
@@ -129,6 +151,7 @@ SUMMARY_FILE="${OUT_DIR}/collection_summary.txt"
   echo "end_time=${END_TIME}"
   echo "remote_log_dir=${LOG_DIR}"
   echo "cdc_filter_pattern=${CDC_FILTER_PATTERN}"
+  echo "cdc_max_line_len=${CDC_MAX_LINE_LEN}"
   echo "output_dir=${OUT_DIR}"
   echo
 } > "$SUMMARY_FILE"
@@ -139,6 +162,7 @@ echo "End time:    ${END_TIME}"
 echo "Remote dir:  ${LOG_DIR}"
 echo "Debug:       ${DEBUG}"
 echo "CDC filter:  ${CDC_FILTER_PATTERN:-<none>}"
+echo "Max line:    ${CDC_MAX_LINE_LEN} (0 = no truncation)"
 echo "Output dir:  ${OUT_DIR}"
 echo
 
@@ -186,7 +210,7 @@ while read -r NAME IP; do
   echo "============================================================"
 
   printf '%s\n' "$REMOTE_SCRIPT" \
-    | gironde ssh "$NAME" "sudo -n bash -s -- ${REMOTE_LOG_DIR} ${REMOTE_BEGIN_TIME} ${REMOTE_END_TIME} ${DEBUG} ${REMOTE_CDC_FILTER_PATTERN}" \
+    | gironde ssh "$NAME" "sudo -n bash -s -- ${REMOTE_LOG_DIR} ${REMOTE_BEGIN_TIME} ${REMOTE_END_TIME} ${DEBUG} ${REMOTE_CDC_FILTER_PATTERN} ${REMOTE_CDC_MAX_LINE_LEN}" \
     > "$OUT_FILE"
 
   rc=$?

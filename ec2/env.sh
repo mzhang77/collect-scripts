@@ -33,7 +33,15 @@ fi
 : "${TIKV_INSTANCE_FILTER=0a012c78|0a012646}"
 # Optional awk regular expression. Matching CDC log lines are excluded from output.
 #: "${CDC_LOG_FILTER_PATTERN:=scan window local advance due to pending barrier}"
-: "${CDC_LOG_FILTER_PATTERN:=scan window local advance due to pending barrier event|multiStmtExecute failed, fallback to sequence way|execute DMLs with error, retry later}"
+#: "${CDC_LOG_FILTER_PATTERN:=scan window local advance due to pending barrier event|multiStmtExecute failed, fallback to sequence way|execute DMLs with error, retry later}"
+: "${CDC_LOG_FILTER_PATTERN:=}"
+# Lines longer than this are shortened field by field: each long field keeps
+# its first and last CDC_LOG_MAX_LINE_LEN/8 bytes, the middle is replaced by
+# " ...<cut N bytes>... ". Some TiCDC logs (e.g. "execute DMLs with error,
+# retry later") dump whole SQL batches with arguments, up to tens of MB per
+# line; the error cause sits at the end of the [error="..."] field.
+# 0 = keep full lines.
+: "${CDC_LOG_MAX_LINE_LEN:=4096}"
 
 _ec2_date_slash() {
     printf '%s\n' "$1" | tr 'T' ' ' | awk '{print $1}' | tr '-' '/'
