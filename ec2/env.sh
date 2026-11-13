@@ -23,7 +23,7 @@ fi
 # Her "Changefeed Checkpoint Lag" screenshot (EDT, UTC-4): lag rises ~15:02 EDT, all lines back to 0 by ~15:27 EDT
 # = ~19:02 -> ~19:27 UTC. Margin added to catch changefeed creation and the aftermath. All times here are UTC.
 : "${BEGIN_TIME:=2026-11-12 20:30:00}"
-: "${END_TIME:=2026-11-10 21:30:00}"
+: "${END_TIME:=2026-11-12 21:30:00}"
 : "${LOG_DIR:=/var/log/tidb}"
 : "${DEBUG:=1}"
 : "${INTERVAL_MINUTES:=20}"
