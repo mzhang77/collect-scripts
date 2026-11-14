@@ -17,8 +17,11 @@ OUT_DIR="./pd_logs_${CLUSTER}_$(date +%Y%m%d_%H%M%S)"
 TMP_INSTANCES="$(mktemp /tmp/collect_pd_logs.XXXXXX)"
 trap 'rm -f "$TMP_INSTANCES"' EXIT
 
+# Always emit a quoted word, even for an empty value: an empty value must still
+# occupy its positional slot on the remote "bash -s -- ..." command line.
 quote() {
-  printf "%s" "$1" | sed "s/'/'\\\\''/g; s/^/'/; s/$/'/"
+  local q="'\\''"
+  printf "'%s'" "${1//\'/$q}"
 }
 
 REMOTE_BEGIN_TIME="$(quote "$BEGIN_TIME")"

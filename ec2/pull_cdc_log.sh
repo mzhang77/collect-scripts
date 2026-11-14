@@ -21,8 +21,11 @@ OUT_DIR="./ticdc_logs_${CLUSTER}_$(date +%Y%m%d_%H%M%S)"
 TMP_INSTANCES="$(mktemp /tmp/collect_ticdc_logs.XXXXXX)"
 trap 'rm -f "$TMP_INSTANCES"' EXIT
 
+# Always emit a quoted word, even for an empty value: an empty value must still
+# occupy its positional slot on the remote "bash -s -- ..." command line.
 quote() {
-  printf "%s" "$1" | sed "s/'/'\\\\''/g; s/^/'/; s/$/'/"
+  local q="'\\''"
+  printf "'%s'" "${1//\'/$q}"
 }
 
 REMOTE_LOG_DIR="$(quote "$LOG_DIR")"
@@ -96,6 +99,7 @@ fi
 if [[ "$debug" == "1" ]]; then
   echo "[remote-debug] begin=$begin end=$end" >&2
   echo "[remote-debug] begin_cmp=$begin_cmp end_cmp=$end_cmp" >&2
+  echo "[remote-debug] filter_pattern=[$filter_pattern] max_line_len=$max_line_len" >&2
   echo "[remote-debug] rotated files: ${#rotated_files[@]}" >&2
   echo "[remote-debug] selected files: ${selected_files[*]}" >&2
 fi
