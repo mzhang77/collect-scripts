@@ -19,14 +19,14 @@ fi
 
 : "${CLUSTER_NAME:=${EC2_CLUSTER:?set EC2_CLUSTER in $COLLECT_CONF, or export CLUSTER_NAME}}"
 # Previous window (NAID-12273): 2026-10-08 17:00:00 -> 2026-10-09 14:15:00
-# NAID-12205: Rachel's most recent node_2425 attempt on the isolated 8.5.8 newarch TiCDC node.
-# Her "Changefeed Checkpoint Lag" screenshot (EDT, UTC-4): lag rises ~15:02 EDT, all lines back to 0 by ~15:27 EDT
-# = ~19:02 -> ~19:27 UTC. Margin added to catch changefeed creation and the aftermath. All times here are UTC.
+# Previous window (ticdc-lag full CDC logs): 2026-11-12 20:00:00 -> 2026-11-13 18:00:00
+# ticdc changefeed stall (sync point barrier vs. memory quota): Clinic metrics from just before
+# the downstream errors (20:42) through the 17:25/17:27 pause/resume. All times here are UTC.
 : "${BEGIN_TIME:=2026-11-12 20:00:00}"
 : "${END_TIME:=2026-11-13 18:00:00}"
 : "${LOG_DIR:=/var/log/tidb}"
 : "${DEBUG:=1}"
-: "${INTERVAL_MINUTES:=20}"
+: "${INTERVAL_MINUTES:=120}"
 # Optional awk regular expression matched against the TiKV instance name
 # (infra-tidb-tikv-<cluster>-<id>). Only matching instances are collected by
 # pull_tikv_log.sh and pull_rocksdb_log.sh. Empty = collect all TiKV instances.
