@@ -29,11 +29,11 @@ fi
 # 2026-11-19 13:30 -> 17:30 UTC (4h): the Titan blob write at ~14:20 UTC that pushed the
 # blob compression factor to ~700 on tikv-10/13/14, and the first ~3h of the region
 # split/merge thrashing it caused. ~150MB of metrics per hour -> ~600MB, one Clinic chunk.
-: "${BEGIN_TIME:=2026-11-19 13:30:00}"
-: "${END_TIME:=2026-11-19 17:30:00}"
+: "${BEGIN_TIME:=2026-11-20 19:00:00}"
+: "${END_TIME:=2026-11-20 20:00:00}"
 : "${TIMEZONE_OFFSET:=+00:00}"
 
-: "${INTERVAL_MINUTES:=240}"
+: "${INTERVAL_MINUTES:=60}"
 : "${DIAG_BASE_URL:=http://localhost:4917}"
 # Optional extended regex on TiKV pod names for the log pulls (pull_tikv_log.sh,
 # pull_rocksdb_log.sh), e.g. TIKV_POD_FILTER='tikv-(0|10|13|14)$'. Empty = all TiKV pods.
