@@ -26,13 +26,15 @@ fi
 
 # Canonical input time format, in UTC:
 #   YYYY-MM-DD HH:MM:SS
-# 2026-11-19 11:00-12:00 PST: region split/merge thrashing (admin apply ~10-40 ops/s)
-# overlapping with the periodic p999 latency spikes.
-: "${BEGIN_TIME:=2026-11-19 19:00:00}"
-: "${END_TIME:=2026-11-19 20:00:00}"
+# 2026-11-18 16:00 -> 2026-11-20 18:00 UTC (50h): one day before the region split/merge
+# thrashing started (~2026-11-19 16:00 UTC) through today. ~150MB of metrics per hour on
+# this cluster, so 50h is ~7.5GB, uploaded as a single Clinic chunk (INTERVAL_MINUTES=3000).
+# This range is meant for tiup_collectk.sh; override BEGIN_TIME/END_TIME for the log pulls.
+: "${BEGIN_TIME:=2026-11-18 16:00:00}"
+: "${END_TIME:=2026-11-20 18:00:00}"
 : "${TIMEZONE_OFFSET:=+00:00}"
 
-: "${INTERVAL_MINUTES:=60}"
+: "${INTERVAL_MINUTES:=3000}"
 : "${DIAG_BASE_URL:=http://localhost:4917}"
 : "${DIAG_NAMESPACE:=tidb-admin}"
 : "${DIAG_SERVICE:=diag}"
