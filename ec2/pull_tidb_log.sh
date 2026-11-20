@@ -11,6 +11,10 @@ CLUSTER="$CLUSTER_NAME"
 BEGIN_TIME="$BEGIN_TIME_SLASH"
 END_TIME="$END_TIME_SLASH"
 
+# Optional awk regular expression. When set, only matching log lines are kept
+# (filtered on the remote host before transfer). Empty = keep all lines.
+INCLUDE_PATTERN="$TIDB_LOG_INCLUDE_PATTERN"
+
 # Local output directory
 OUT_DIR="./tidb_sql_logs_${CLUSTER}_$(date +%Y%m%d_%H%M%S)"
 
@@ -29,11 +33,13 @@ quote() {
 REMOTE_LOG_DIR="$(quote "$LOG_DIR")"
 REMOTE_BEGIN_TIME="$(quote "$BEGIN_TIME")"
 REMOTE_END_TIME="$(quote "$END_TIME")"
+REMOTE_INCLUDE_PATTERN="$(quote "$INCLUDE_PATTERN")"
 
 REMOTE_SCRIPT='log_dir="$1"
 begin="$2"
 end="$3"
 debug="$4"
+include_pattern="$5"
 
 cd "$log_dir" || exit 10
 
@@ -86,7 +92,7 @@ if [[ -f tidb.log && ! "$last_rotated_end" > "$end" ]]; then
 fi
 
 if [[ "$debug" == "1" ]]; then
-  echo "[remote-debug] begin=$begin end=$end" >&2
+  echo "[remote-debug] begin=$begin end=$end include_pattern=[$include_pattern]" >&2
   echo "[remote-debug] rotated files: ${#rotated_files[@]}" >&2
   echo "[remote-debug] selected files: ${selected_files[*]}" >&2
 fi
@@ -98,10 +104,10 @@ fi
 # The TiDB log time format is like:
 #   "time":"2026/06/25 02:37:59.325 +00:00"
 # We compare only the first 19 chars: 2026/06/25 02:37:59
-awk -v begin="$begin" -v end="$end" '\''
+awk -v begin="$begin" -v end="$end" -v include_pattern="$include_pattern" '\''
   match($0, /"time":"([0-9]{4}\/[0-9]{2}\/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2})/, m) {
     t = m[1]
-    if (t >= begin && t <= end) {
+    if (t >= begin && t <= end && (include_pattern == "" || $0 ~ include_pattern)) {
       print $0
     }
   }
@@ -116,6 +122,7 @@ SUMMARY_FILE="${OUT_DIR}/collection_summary.txt"
   echo "begin_time=${BEGIN_TIME}"
   echo "end_time=${END_TIME}"
   echo "remote_log_dir=${LOG_DIR}"
+  echo "include_pattern=${INCLUDE_PATTERN}"
   echo "output_dir=${OUT_DIR}"
   echo
 } > "$SUMMARY_FILE"
@@ -124,6 +131,7 @@ echo "Cluster:     ${CLUSTER}"
 echo "Begin time:  ${BEGIN_TIME}"
 echo "End time:    ${END_TIME}"
 echo "Remote dir:  ${LOG_DIR}"
+echo "Include:     ${INCLUDE_PATTERN:-<all lines>}"
 echo "Debug:       ${DEBUG}"
 echo "Output dir:  ${OUT_DIR}"
 echo
@@ -169,7 +177,7 @@ while read -r NAME IP; do
   echo "============================================================"
 
   printf '%s\n' "$REMOTE_SCRIPT" \
-    | gironde ssh "$NAME" "sudo -n bash -s -- ${REMOTE_LOG_DIR} ${REMOTE_BEGIN_TIME} ${REMOTE_END_TIME} ${DEBUG}" \
+    | gironde ssh "$NAME" "sudo -n bash -s -- ${REMOTE_LOG_DIR} ${REMOTE_BEGIN_TIME} ${REMOTE_END_TIME} ${DEBUG} ${REMOTE_INCLUDE_PATTERN}" \
     > "$OUT_FILE"
 
   rc=$?

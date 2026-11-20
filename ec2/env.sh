@@ -39,6 +39,13 @@ fi
 #: "${CDC_LOG_FILTER_PATTERN:=scan window local advance due to pending barrier}"
 #: "${CDC_LOG_FILTER_PATTERN:=scan window local advance due to pending barrier event|multiStmtExecute failed, fallback to sequence way|execute DMLs with error, retry later}"
 : "${CDC_LOG_FILTER_PATTERN:=}"
+
+# Optional awk regular expression for pull_tidb_log.sh. Only matching TiDB log
+# lines are kept; the filtering runs on the remote host, so a wide time window
+# stays small. Empty = keep all lines.
+# NAID-12651: the leaked memory-lock txn (start_ts) and the stuck TiKV (name / store id).
+: "${TIDB_LOG_INCLUDE_PATTERN=470589482680476065|0a031a1e|1879666671}"
+# : "${TIDB_LOG_INCLUDE_PATTERN=}"
 # Lines longer than this are shortened field by field: each long field keeps
 # its first and last CDC_LOG_MAX_LINE_LEN/8 bytes, the middle is replaced by
 # " ...<cut N bytes>... ". Some TiCDC logs (e.g. "execute DMLs with error,
