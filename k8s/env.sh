@@ -26,8 +26,10 @@ fi
 
 # Canonical input time format, in UTC:
 #   YYYY-MM-DD HH:MM:SS
-: "${BEGIN_TIME:=2026-11-12 01:00:00}"
-: "${END_TIME:=2026-11-12 01:30:00}"
+# 2026-11-19 11:00-12:00 PST: region split/merge thrashing (admin apply ~10-40 ops/s)
+# overlapping with the periodic p999 latency spikes.
+: "${BEGIN_TIME:=2026-11-19 19:00:00}"
+: "${END_TIME:=2026-11-19 20:00:00}"
 : "${TIMEZONE_OFFSET:=+00:00}"
 
 : "${INTERVAL_MINUTES:=60}"

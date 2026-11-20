@@ -14,6 +14,9 @@ BEGIN_DATE="${BEGIN_TIME%% *}"
 BEGIN_DATE="${BEGIN_DATE//\//-}"
 END_DATE="${END_TIME%% *}"
 END_DATE="${END_DATE//\//-}"
+# A rotated file is named after the time it was rotated, so it holds lines from before
+# that date. Also scan files rotated the day after END_TIME; the awk time filter trims them.
+END_DATE_SCAN="$(date -u -d "${END_DATE} +1 day" +%Y-%m-%d 2>/dev/null || date -u -j -v+1d -f %Y-%m-%d "${END_DATE}" +%Y-%m-%d)"
 
 KUBECTL_CONTAINER="tikv"
 REMOTE_LOG_DIR="/var/log/tidb"
@@ -60,7 +63,7 @@ for pod in $pods; do
             ls -1t tikv*.log 2>/dev/null \
                 | grep -v '^tikv.log$' \
                 | grep -v '^tikv-slow.log$' \
-                | awk -v begin_date='${BEGIN_DATE}' -v end_date='${END_DATE}' '
+                | awk -v begin_date='${BEGIN_DATE}' -v end_date='${END_DATE_SCAN}' '
                     /^tikv-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T/ {
                         file_date = substr(\$0, 6, 10)
                         if (file_date >= begin_date && file_date <= end_date) {
