@@ -20,18 +20,20 @@ fi
 : "${CLUSTER_NAME:=${EC2_CLUSTER:?set EC2_CLUSTER in $COLLECT_CONF, or export CLUSTER_NAME}}"
 # Previous window (NAID-12273): 2026-10-08 17:00:00 -> 2026-10-09 14:15:00
 # Previous window (ticdc-lag full CDC logs): 2026-11-12 20:00:00 -> 2026-11-13 18:00:00
-# ticdc changefeed stall (sync point barrier vs. memory quota): Clinic metrics from just before
-# the downstream errors (20:42) through the 17:25/17:27 pause/resume. All times here are UTC.
-: "${BEGIN_TIME:=2026-11-12 20:00:00}"
-: "${END_TIME:=2026-11-13 18:00:00}"
+# NAID-12651: store-wide resolved-ts stall (leaked memory lock + grpc-server-3 spinning in
+# BatchReceiver). Covers the 06:30 background errors, the 06:33 CDC re-registration storm,
+# the 07:35-07:40 leader eviction and the 07:49 TiKV restart. All times here are UTC.
+: "${BEGIN_TIME:=2026-11-20 06:20:00}"
+: "${END_TIME:=2026-11-20 08:00:00}"
 : "${LOG_DIR:=/var/log/tidb}"
 : "${DEBUG:=1}"
 : "${INTERVAL_MINUTES:=120}"
 # Optional awk regular expression matched against the TiKV instance name
 # (infra-tidb-tikv-<cluster>-<id>). Only matching instances are collected by
 # pull_tikv_log.sh and pull_rocksdb_log.sh. Empty = collect all TiKV instances.
-: "${TIKV_INSTANCE_FILTER=}"
-# : "${TIKV_INSTANCE_FILTER=0a012c78|0a012646}"
+# NAID-12651: the stuck store (store id 1879666671). Set to empty to collect every TiKV.
+: "${TIKV_INSTANCE_FILTER=0a031a1e}"
+# : "${TIKV_INSTANCE_FILTER=}"
 
 # Optional awk regular expression. Matching CDC log lines are excluded from output.
 #: "${CDC_LOG_FILTER_PATTERN:=scan window local advance due to pending barrier}"
