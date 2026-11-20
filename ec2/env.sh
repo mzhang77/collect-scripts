@@ -27,7 +27,7 @@ fi
 : "${END_TIME:=2026-11-20 08:00:00}"
 : "${LOG_DIR:=/var/log/tidb}"
 : "${DEBUG:=1}"
-: "${INTERVAL_MINUTES:=120}"
+: "${INTERVAL_MINUTES:=20}"
 # Optional awk regular expression matched against the TiKV instance name
 # (infra-tidb-tikv-<cluster>-<id>). Only matching instances are collected by
 # pull_tikv_log.sh and pull_rocksdb_log.sh. Empty = collect all TiKV instances.
