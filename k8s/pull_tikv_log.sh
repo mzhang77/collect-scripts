@@ -31,10 +31,11 @@ SUMMARY_FILE="${LOCAL_OUT_DIR}/collection_summary.txt"
     echo "namespace=${NS}"
     echo "begin_time=${BEGIN_TIME}"
     echo "end_time=${END_TIME}"
+    echo "pod_filter=${TIKV_POD_FILTER}"
     echo
 } > "$SUMMARY_FILE"
 
-pods=$(kubectl get pod -n "$NS" -o name | grep 'tikv-' | sed 's#pod/##')
+pods=$(kubectl get pod -n "$NS" -o name | grep -E 'tikv-[0-9]+$' | sed 's#pod/##' | grep -E -- "${TIKV_POD_FILTER:-.}")
 
 for pod in $pods; do
     echo "===== Processing $pod ====="
