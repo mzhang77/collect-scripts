@@ -86,6 +86,12 @@ collect_ssh_stream() (
 #: "${CDC_LOG_FILTER_PATTERN:=scan window local advance due to pending barrier event|multiStmtExecute failed, fallback to sequence way|execute DMLs with error, retry later}"
 : "${CDC_LOG_FILTER_PATTERN:=}"
 
+# Optional awk regular expression matched against the TiDB instance name
+# (infra-tidb-sql-<cluster>-<id>). Only matching instances are collected by
+# pull_tidb_log.sh and pull_slow_log.sh. Empty = collect all TiDB instances.
+: "${TIDB_INSTANCE_FILTER=}"
+# : "${TIDB_INSTANCE_FILTER=0a01d1c5}"
+
 # Optional awk regular expression for pull_tidb_log.sh. Only matching TiDB log
 # lines are kept; the filtering runs on the remote host, so a wide time window
 # stays small. Empty = keep all lines.

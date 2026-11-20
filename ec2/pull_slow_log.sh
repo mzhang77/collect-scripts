@@ -167,6 +167,7 @@ SUMMARY_FILE="${OUT_DIR}/collection_summary.txt"
   echo "begin_time=${BEGIN_TIME}"
   echo "end_time=${END_TIME}"
   echo "remote_log_dir=${LOG_DIR}"
+  echo "instance_filter=${TIDB_INSTANCE_FILTER}"
   echo "output_dir=${OUT_DIR}"
   echo
 } > "$SUMMARY_FILE"
@@ -175,25 +176,27 @@ echo "Cluster:     ${CLUSTER}"
 echo "Begin time:  ${BEGIN_TIME}"
 echo "End time:    ${END_TIME}"
 echo "Remote dir:  ${LOG_DIR}"
+echo "Instances:   ${TIDB_INSTANCE_FILTER:-<all>}"
 echo "Debug:       ${DEBUG}"
 echo "Output dir:  ${OUT_DIR}"
 echo
 
 echo "Querying instances from getin..."
-getin "$CLUSTER" | awk -v cluster="$CLUSTER" '
+getin "$CLUSTER" | awk -v cluster="$CLUSTER" -v instance_filter="$TIDB_INSTANCE_FILTER" '
   BEGIN {
     # Only keep exact SQL nodes for this cluster:
     # infra-tidb-sql-<cluster>-<id>
     pattern = "^infra-tidb-sql-" cluster "-[A-Za-z0-9]+$"
   }
 
-  $1 ~ pattern && $2 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ {
+  $1 ~ pattern && $2 ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/ &&
+  (instance_filter == "" || $1 ~ instance_filter) {
     print $1, $2
   }
 ' > "$TMP_INSTANCES"
 
 if [[ ! -s "$TMP_INSTANCES" ]]; then
-  echo "No SQL instances found for cluster: ${CLUSTER}"
+  echo "No SQL instances found for cluster: ${CLUSTER} (instance filter: ${TIDB_INSTANCE_FILTER:-<none>})"
   exit 1
 fi
 
