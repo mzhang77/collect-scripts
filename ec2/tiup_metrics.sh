@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
@@ -166,7 +165,7 @@ fi
 
 if [[ "$metrics_type" == "auto" ]]; then
     printf 'Auto-detecting metrics backend on %s...\n' "$metrics_host" >&2
-    ps_output=$(gironde ssh "$metrics_host" ps -ef 2>/dev/null)
+    ps_output=$(collect_ssh_stream "$metrics_host" "ps -ef" 2>/dev/null)
     if [[ -z "$ps_output" ]]; then
         echo >&2 "[ERROR] failed to get process list from $metrics_host"
         exit 1

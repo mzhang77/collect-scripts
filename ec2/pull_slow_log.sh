@@ -228,7 +228,7 @@ while read -r NAME IP; do
   echo "============================================================"
 
   printf '%s\n' "$REMOTE_SCRIPT" \
-    | gironde ssh "$NAME" "sudo -n bash -s -- ${REMOTE_LOG_DIR} ${REMOTE_BEGIN_TIME} ${REMOTE_END_TIME} ${DEBUG}" \
+    | collect_ssh_stream "$NAME" "sudo -n bash -s -- ${REMOTE_LOG_DIR} ${REMOTE_BEGIN_TIME} ${REMOTE_END_TIME} ${DEBUG}" \
     > "$OUT_FILE"
 
   rc=$?

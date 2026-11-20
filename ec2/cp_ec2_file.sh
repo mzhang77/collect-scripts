@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 set -o errexit
@@ -46,7 +45,7 @@ echo "  Remote path: $REMOTE_PATH"
 echo "  Local dir:   $(cd "$LOCAL_DIR" && pwd)"
 echo
 
-gironde ssh -T "$HOST" \
+collect_ssh_stream "$HOST" \
   "test -e $REMOTE_DIR_QUOTED/$REMOTE_NAME_QUOTED &&
    tar -C $REMOTE_DIR_QUOTED -cf - -- $REMOTE_NAME_QUOTED" |
   tar -C "$LOCAL_DIR" -xvf -

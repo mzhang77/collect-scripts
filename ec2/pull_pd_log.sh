@@ -105,7 +105,7 @@ while read -r NAME IP; do
   # Select files by rotation timestamp before reading any log content. Keep
   # the newest rotated file before BEGIN_TIME because it may cross the start
   # boundary, plus files through END_TIME. Always keep the current pd.log.
-  gironde ssh "$NAME" "
+  collect_ssh_stream "$NAME" "
     set -o pipefail
 
     find '$LOG_DIR' -maxdepth 1 -type f \( -name 'pd.log' -o -name 'pd-*.log' \) -printf '%f\\n' 2>/dev/null |
@@ -137,7 +137,7 @@ while read -r NAME IP; do
         }
       ' \"\$f\"
     done | gzip -c
-  " > "$OUT_FILE" < /dev/null
+  " < /dev/null > "$OUT_FILE"
 
   rc=$?
 

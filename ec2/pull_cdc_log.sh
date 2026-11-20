@@ -214,7 +214,7 @@ while read -r NAME IP; do
   echo "============================================================"
 
   printf '%s\n' "$REMOTE_SCRIPT" \
-    | gironde ssh "$NAME" "sudo -n bash -s -- ${REMOTE_LOG_DIR} ${REMOTE_BEGIN_TIME} ${REMOTE_END_TIME} ${DEBUG} ${REMOTE_CDC_FILTER_PATTERN} ${REMOTE_CDC_MAX_LINE_LEN}" \
+    | collect_ssh_stream "$NAME" "sudo -n bash -s -- ${REMOTE_LOG_DIR} ${REMOTE_BEGIN_TIME} ${REMOTE_END_TIME} ${DEBUG} ${REMOTE_CDC_FILTER_PATTERN} ${REMOTE_CDC_MAX_LINE_LEN}" \
     > "$OUT_FILE"
 
   rc=$?

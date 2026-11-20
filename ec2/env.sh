@@ -17,6 +17,52 @@ if [ -r "$COLLECT_CONF" ]; then
     . "$COLLECT_CONF"
 fi
 
+# --- gironde ssh output that must be saved byte-for-byte -------------------
+# `gironde ssh` may print messages such as
+#   "Adding new (storage) certificate to the ssh-agent"
+# to stdout (e.g. when it refreshes the ssh certificate). When the remote
+# output is a gzip or tar stream, that text ends up in front of the stream and
+# corrupts the saved file.
+#
+# collect_ssh_stream HOST REMOTE_COMMAND
+#   Runs REMOTE_COMMAND on HOST through gironde ssh. The remote side first
+#   prints a marker line; everything gironde prints before the marker is moved
+#   to stderr, and only the bytes after it are written to stdout. stdin is
+#   passed through to the remote command. The exit status is the ssh/remote
+#   status (or 1 if output arrived without the marker).
+COLLECT_STREAM_MARKER='__COLLECT_SCRIPTS_PAYLOAD_BEGIN__'
+
+_collect_strip_until_marker() {
+    _cs_seen=0
+    # `read` consumes a pipe one byte at a time, so the payload after the
+    # marker line is left untouched for `cat`.
+    while IFS= read -r _cs_line; do
+        case "$_cs_line" in
+            *"$COLLECT_STREAM_MARKER")
+                _cs_prefix="${_cs_line%"$COLLECT_STREAM_MARKER"}"
+                [ -n "$_cs_prefix" ] && printf '%s\n' "$_cs_prefix" >&2
+                cat
+                return 0
+                ;;
+        esac
+        _cs_seen=1
+        printf '%s\n' "$_cs_line" >&2
+    done
+    # A final line without a trailing newline is still in _cs_line.
+    if [ -n "${_cs_line:-}" ]; then
+        _cs_seen=1
+        printf '%s\n' "$_cs_line" >&2
+    fi
+    # No marker: the remote command never started. Fail only if something was
+    # printed; otherwise let the ssh exit status speak (see pipefail below).
+    return "$_cs_seen"
+}
+
+collect_ssh_stream() (
+    set -o pipefail
+    gironde ssh -T "$1" "printf '%s\n' '$COLLECT_STREAM_MARKER'; $2" | _collect_strip_until_marker
+)
+
 : "${CLUSTER_NAME:=${EC2_CLUSTER:?set EC2_CLUSTER in $COLLECT_CONF, or export CLUSTER_NAME}}"
 # Previous window (NAID-12273): 2026-10-08 17:00:00 -> 2026-10-09 14:15:00
 # Previous window (ticdc-lag full CDC logs): 2026-11-12 20:00:00 -> 2026-11-13 18:00:00
